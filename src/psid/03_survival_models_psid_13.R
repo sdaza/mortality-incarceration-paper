@@ -347,7 +347,7 @@ texreg(models_unw, include.rsquared = FALSE, include.aic = FALSE,
     caption.above = TRUE,
     fontsize = "scriptsize",
     float.pos = "htp",
-    file = paste0(path, "output/models_psid_1.tex")
+    file = "output/models_psid_1.tex"
     )
 
 texreg(models_w, include.rsquared = FALSE, include.aic = FALSE,
@@ -367,7 +367,7 @@ texreg(models_w, include.rsquared = FALSE, include.aic = FALSE,
     caption.above = TRUE,
     fontsize = "scriptsize",
     float.pos = "htp",
-    file = paste0(path, "output/models_psid_2.tex")
+    file = "output/models_psid_2.tex"
     )
 
 #########################
@@ -394,7 +394,7 @@ plot_m1_1_18 <- getComparisonPlot(m1.1, data1 = newdata1,
   pos1 = c(30, 42),
   pos2 = c(0.3, 0.08))
 
-savepdf(paste0(path, "output/plot_psid_m1_1_18"))
+savepdf("output/plot_psid_m1_1_18")
 print(plot_m1_1_18)
 dev.off()
 
@@ -418,7 +418,7 @@ plot_m1_1_30 <- getComparisonPlot(m1.1, data1 = newdata1, data2 = newdata2,
                                     pos1 = c(25, 42), pos2 = c(0.3, 0.20))
 
 
-savepdf(paste0(path, "output/plot_psid_m1_1_30"))
+savepdf("output/plot_psid_m1_1_30")
 print(plot_m1_1_30)
 dev.off()
 

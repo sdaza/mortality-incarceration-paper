@@ -4,6 +4,9 @@
 # author: sebastian daza
 ##############################
 
+# load utilities
+source("src/utils/utils.R")
+
 ##############################
 # psid analysis
 ##############################
@@ -15,7 +18,7 @@ source("src/psid/01_load_individual_data_13.R")
 source("src/psid/02_define_variables_long_13.R")
 
 # models
-source("src/psid/03_survival_models_psid_13_adjustments.R")
+source("src/psid/03_survival_models_psid_13.R")
 
 
 ##############################
