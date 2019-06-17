@@ -12,16 +12,15 @@ source("src/utils/utils.R")
 ##############################
 
 # load data
-source("src/psid/01_load_individual_data_13.R")
+source("src/psid/01_load_individual_data_psid13.R")
 
 # reformat data and variables
-source("src/psid/02_define_variables_long_13.R")
+source("src/psid/02_define_variables_long_psid13.R")
 
 # models
-source("src/psid/03_survival_models_psid_13.R")
+source("src/psid/03_survival_models_psid_psid13.R")
 
 # multiple imputation
-
 
 
 ##############################
@@ -29,7 +28,7 @@ source("src/psid/03_survival_models_psid_13.R")
 ##############################
 
 # load data and format variables
-source("src/nlsy/01_load_data.R")
+source("src/nlsy/01_load_data_nlsy79.R")
 
 # models
-source("src/nlsy/02_survival_models_nlsy_adjusted.R")
+source("src/nlsy/02_survival_models_nlsy79.R")
