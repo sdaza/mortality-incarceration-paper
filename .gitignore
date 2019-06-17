@@ -1,1 +1,8 @@
 .ipynb_checkpoints
+example/
+notebooks/
+data/
+.DS_Store
+.gitignore
+*.rds
+output.csv
