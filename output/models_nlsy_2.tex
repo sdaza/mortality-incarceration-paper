@@ -1,0 +1,45 @@
+
+\begin{table}[htp]
+\caption{Cox Survival Models on the effect of Imprisonment on Mortality, \newline Weighted, NLSY79 1980-2014}
+\begin{center}
+\begin{scriptsize}
+\begin{tabular}{l D{.}{.}{6.3} D{.}{.}{6.3} D{.}{.}{6.3} D{.}{.}{6.3} }
+\toprule
+ & \multicolumn{1}{c}{M1} & \multicolumn{1}{c}{M1 MSM} & \multicolumn{1}{c}{M2} & \multicolumn{1}{c}{M2 MSM} \\
+\midrule
+Prison                           & -0.15  & 0.76   & -0.14  & 0.78   \\
+                                 & (0.34) & (0.31) & (0.35) & (0.31) \\
+Male                             & -0.25  & -0.07  & -0.23  & -0.09  \\
+                                 & (0.22) & (0.20) & (0.22) & (0.20) \\
+Race (ref. Non-Hispanics/Blacks) &        &        &        &        \\
+                                 &        &        &        &        \\
+\quad Black                      & -0.23  & 0.28   & -0.21  & 0.30   \\
+                                 & (0.21) & (0.20) & (0.21) & (0.20) \\
+\quad Hispanic                   & -0.24  & -0.07  & -0.21  & -0.07  \\
+                                 & (0.25) & (0.25) & (0.25) & (0.24) \\
+Log Income, centered             & 0.04   &        & 0.03   &        \\
+                                 & (0.04) &        & (0.04) &        \\
+Education (ref. $<$ HS)          &        &        &        &        \\
+                                 &        &        &        &        \\
+\quad High school                & -0.47  &        & -0.46  &        \\
+                                 & (0.26) &        & (0.26) &        \\
+\quad Some college               & -0.18  &        & -0.14  &        \\
+                                 & (0.34) &        & (0.35) &        \\
+\quad College                    & -0.34  &        & -0.26  &        \\
+                                 & (0.37) &        & (0.38) &        \\
+Working                          & -0.82  &        & -0.43  &        \\
+                                 & (0.28) &        & (0.32) &        \\
+Married                          & -1.75  &        & -1.68  &        \\
+                                 & (0.31) &        & (0.31) &        \\
+Poor health                      &        &        & 0.81   &        \\
+                                 &        &        & (0.29) &        \\
+\midrule
+Deaths                           & 137    & 137    & 137    & 137    \\
+Person-years                     & 131304 & 131304 & 131304 & 131304 \\
+\bottomrule
+\multicolumn{5}{l}{\tiny{Robust standard errors in parenthesis. Age, Delinquency at 1980 and Parent's education coefficient omitted.}}
+\end{tabular}
+\end{scriptsize}
+\label{models_nlsy_2}
+\end{center}
+\end{table}
