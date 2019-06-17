@@ -1,0 +1,141 @@
+##############################
+# health and incarceration
+# pooling models using imputed data
+# author: sebastian daza
+##############################
+
+#+ libraries
+library(sdazar)
+# library(haven)
+library(ggplot2)
+library(lattice)
+library(survival)
+# library(colorout)
+library(mitools)
+library(texreg)
+library(survey)
+
+library(here)
+setwd(here("05Research/sdaza"))
+# setwd("00projects/incarceration")
+
+# specific path to save tables and plots
+path <- "/Users/sdaza/GoogleDrive/01Projects/01IncarcerationHealth/06WorkingPapers/Manuscript/"
+# path <- "00projects/incarceration/latex"
+
+
+# load functions
+# source("functions.R")
+source("src/psid/functions.R")
+
+
+#################################
+#+ load imputation results
+##################################
+
+# weighted analysis
+# models_wt
+load("output/rdata/psid/models_wt.Rdata")
+
+m1 <- MIcombine(coeff_wt, vcov_wt)
+screenreg(m1)
+
+# models_h_wt
+load("output/rdata/psid/models_h_wt.Rdata")
+
+m2 <- MIcombine(coeff_h_wt, vcov_h_wt)
+screenreg(m2)
+
+# models_wt_msm
+load("output/rdata/psid/models_wt_msm.Rdata")
+
+m3 <- MIcombine(coeff_wt_msm, vcov_wt_msm)
+screenreg(m3)
+
+# models_h_wt_msm
+load("output/rdata/psid/models_h_wt_msm.Rdata")
+
+m4 <- MIcombine(coeff_h_wt_msm, vcov_h_wt_msm)
+length(coeff_h_wt_msm)
+screenreg(m4)
+
+# unweighted models
+load("output/rdata/psid/models_uwt.Rdata")
+
+m5 <- MIcombine(coeff_uwt, vcov_uwt)
+screenreg(m5)
+
+# models_h_uwt
+load("output/rdata/psid/models_h_uwt.Rdata")
+
+m6 <- MIcombine(coeff_h_uwt, vcov_h_uwt)
+screenreg(m6)
+
+# models_uwt_msm
+load("output/rdata/psid/models_uwt_msm.Rdata")
+
+m7 <- MIcombine(coeff_uwt_msm, vcov_uwt_msm)
+screenreg(m7)
+
+# models_h_uwt_msm
+load("output/rdata/psid/models_h_uwt_msm.Rdata")
+
+m8 <- MIcombine(coeff_h_uwt_msm, vcov_h_uwt_msm)
+screenreg(m8)
+
+modelsw <- list(m1,m3,m2,m4)
+modelsuw <- list(m5,m7,m6,m8)
+
+#################################
+# tables with imputation results
+#################################
+
+name.map  <- list(gprison = "Prison",
+                 cagei = "Age",
+                 male = "Male",
+                 fraceiBlack = "Black",
+                 fraceiOther = "Other race + Unknown",
+                 linca = "Log Income, centered",
+                 "ieduchigh school" = "High school",
+                 "ieducsome college" = "Some college",
+                 "ieduccollege" = "College",
+                 dghealth = "Poor health")
+
+texreg(modelsuw,
+    stars = 0,
+    custom.model.names = c("M1", "M1 MSM", "M2", "M2 MSM"),
+    groups = list("Race (ref. White)" = 4:5, "Education (ref. $<$ HS)" = 7:9),
+    custom.coef.map = name.map,
+    custom.note = "Robust standard errors in parenthesis.",
+    booktabs = TRUE,
+    dcolumn = TRUE,
+    use.packages = FALSE,
+    label = "models_psid_imp_1",
+    caption = "Cox Survival Models on the effect of Imprisonment on Mortality, \\newline 100 Imputations, Unweighted, PSID 1968-2013",
+    caption.above = TRUE,
+    fontsize = "scriptsize",
+    float.pos = "htp",
+    file = paste0(path, "tables/models_psid_imp_1.tex")
+    )
+
+
+texreg(modelsw,
+    stars = 0,
+    custom.model.names = c("M1", "M1 MSM", "M2", "M2 MSM"),
+    groups = list("Race (ref. White)" = 4:5, "Education (ref. $<$ HS)" = 7:9),
+    custom.coef.map = name.map,
+    custom.note = "Robust standard errors in parenthesis.",
+    booktabs = TRUE,
+    dcolumn = TRUE,
+    use.packages = FALSE,
+    label = "models_psid_imp_2",
+    caption = "Cox Survival Models on the effect of Imprisonment on Mortality, \\newline 100 Imputations, Weighted, PSID 1968-2013",
+    caption.above = TRUE,
+    fontsize = "scriptsize",
+    float.pos = "htp",
+    file = paste0(path, "tables/models_psid_imp_2.tex")
+    )
+
+############################
+# end of the script
+############################
