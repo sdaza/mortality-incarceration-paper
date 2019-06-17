@@ -1,8 +1,0 @@
-name: Publish Document
-title:
-account: rpubs
-server: rpubs.com
-appId: https://api.rpubs.com/api/v1/document/284453/b35fc500d9b4447382b6adc3d43b1618
-bundleId: https://api.rpubs.com/api/v1/document/284453/b35fc500d9b4447382b6adc3d43b1618
-url: http://rpubs.com/sdaza/284453
-when: 1497450002.09026
