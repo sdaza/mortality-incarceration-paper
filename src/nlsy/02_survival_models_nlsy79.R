@@ -5,29 +5,18 @@
 ##############################
 
 # libraries
-# rm(list=ls(all=TRUE))
-
 library(sdazar)
-library(haven)
 library(forcats)
-# library(VIM)
-# library(simPH)
 library(survival)
 library(survey)
-# library(eha)
 library(survminer)
 library(texreg)
-# library(parfm)
 library(ipw)
 library(ggplot2)
 library(weights)
 
-
 # load data
-load("output/rdata/nlsy/nlsy79_longformat.Rdata")
-source("src/nlsy79/functions.R")
-
-# original model and analysis (PAA)
+ldat <- readRDS("output/nlsy79_long_format_covariates.rds")
 
 ##############################
 # compute time variables for survival analysis
@@ -42,8 +31,6 @@ ldat <- ldat[select == 1]
 ldat[, myear := min(as.numeric(year)), by = id]
 ldat[, start := year - myear, by = id]
 ldat[, stop := start + 1]
-
-ldat[start==0, start := -10]
 
 summary(ldat[, start, stop])
 
@@ -95,7 +82,7 @@ table(ldat[, .(peduc, ieduc)])
 summary(ldat$wt)
 hist(ldat$wt)
 
-# descriptives: time between release and death
+# time between release and death
 
 # time between death and last imprisonment recorded (descriptives)
 
@@ -111,19 +98,24 @@ ldat[, anydeath := ifelse(sum(died, na.rm = TRUE) > 0, 1, 0), id]
 setorder(ldat, year, id)
 
 table(ldat[start == 0, .(anyprison, anydeath)]) # 81
+
+
 ldat[, cum_temp_prison := ifelse(cum_temp_prison > 0, 0, 1)]
+
+
 
 ldat[id == sample(unique(ldat$id), 1), .(id, year, agei, prison)]
 summary(ldat$rprison)
 summary(ldat$tprison)
+
 
 x <- ldat[anyprison == 1 & anydeath == 1,
   .(N = sum(cum_temp_prison)), .(id, male)]
 
 ldat[id == 7461, .(id, year, agei, died,
   tprison, cum_temp_prison)]
-
 table(x$male)
+
 summary(x$N)
 table(x$N, useNA = "ifany")
 hist(x$N, breaks = 12)
@@ -155,18 +147,19 @@ vars <- c("id", "prison", "cage", "male", "race", "ieduc",
 
 countmis(ldat[, vars, with = FALSE])
 
-set1 <- ldat[complete.cases(ldat[, vars, with = FALSE]),]
+set1 <- ldat[complete.cases(ldat[, vars, with = FALSE]), ]
 
 table(set1[, min(stop), by = id][, V1])
 table(set1[, max(stop), by = id][, V1])
 table(set1[, max(start), by = id][, V1])
 table(set1[, min(start), by = id][, V1])
 
-ldat[id == 12253, .(id, year, agei, prison, ijob, ieduc, liinc, imarried, ihealthw)]
+ldat[id == 12253, .(id, year, agei, iprison, ijob, ieduc, liinc, imarried, ihealthw)]
 
 # descriptives for set1
 
 length(unique(set1$id)) # 11372
+
 wpct(set1[start == 0, male])
 wpct(set1[start == 0, race])
 
@@ -179,7 +172,6 @@ m1.1 <- coxph( Surv(start, stop, died) ~ prison + as.factor(cage) +
               + ijob + imarried + cluster(id),
               data = set1)
 
-screenreg(m1.1, include.zph = FALSE)
 
 ds <- svydesign(id = ~ cluster, weights = ~ wt, strata=~stratum, data = set1, nest = TRUE)
 
@@ -187,8 +179,6 @@ m1.2 <- svycoxph( Surv(start, stop, died) ~ prison + as.factor(cage) +
               male + race +  liinc + ieduc + peduc + deltot
               + ijob + imarried + cluster(id),
                design = ds)
-
-screenreg(m1.2, include.zph = FALSE)
 
 
 # plus health
@@ -212,7 +202,6 @@ temp1 <- ipwtm(exposure = dropout, family = "survival",
               id = id,
               tstart = start, timevar = stop,
               type = "first",
-              trunc = 0.01,
               data = set1)
 
 temp2 <- ipwtm(exposure = prison, family = "survival",
@@ -222,22 +211,26 @@ temp2 <- ipwtm(exposure = prison, family = "survival",
               id = id,
               tstart = start, timevar = stop,
               type = "first",
-              trunc = 0.01,
               data = set1)
 
 
+summary(temp1$ipw.weights)
+summary(temp2$ipw.weights)
+
 # create weigths
-set1[, iwt := temp1$weights.trunc * temp2$weights.trunc]
-set1[, nwt := wt * temp1$weights.trunc * temp2$weights.trunc]
+set1[, iwt := temp1$ipw.weights * temp2$ipw.weights]
+set1[, nwt := wt * temp1$ipw.weights * temp2$ipw.weights]
 
 # only MSM weights
-m3.1 <- coxph( Surv(start, stop, died) ~ prison + cluster(id),
+m3.1 <- coxph( Surv(start, stop, died) ~ prison +  male + as.factor(cage) + race
+              + cluster(id),
               data = set1, weights = set1$iwt)
 
+summary(m3.1)
 # sampling and MSM weights
 ds <- svydesign(id = ~ cluster, weights = ~ nwt, strata = ~stratum, data = set1, nest = TRUE)
 
-m3.2 <- svycoxph( Surv(start, stop, died) ~ prison + cluster(id),
+m3.2 <- svycoxph( Surv(start, stop, died) ~ prison + male + as.factor(cage) + race + cluster(id),
               design = ds)
 
 screenreg(list(m3.1, m3.2), include.zph = FALSE)
@@ -251,7 +244,6 @@ temp1 <- ipwtm(exposure = dropout, family = "survival",
               id = id,
               tstart = start, timevar = stop,
               type = "first",
-              trunc = 0.01,
               data = set1)
 
 temp2 <- ipwtm(exposure = prison, family = "survival",
@@ -261,7 +253,6 @@ temp2 <- ipwtm(exposure = prison, family = "survival",
               id = id,
               tstart = start, timevar = stop,
               type = "first",
-              trunc = 0.01,
               data = set1)
 
 
@@ -269,19 +260,19 @@ summary(temp1$ipw.weights)
 summary(temp2$ipw.weights)
 
 # create weigths
-set1[, iwt := temp1$weights.trunc * temp2$weights.trunc]
-set1[, nwt := wt * temp1$weights.trunc * temp2$weights.trunc]
-
+set1[, iwt := temp1$ipw.weights * temp2$ipw.weights]
+set1[, nwt := wt * temp1$ipw.weights * temp2$ipw.weights]
 
 # only MSM weights
-# only MSM weights
-m4.1 <- coxph( Surv(start, stop, died) ~ prison + cluster(id),
+m4.1 <- coxph( Surv(start, stop, died) ~ prison + as.factor(cage) +
+              male + race + cluster(id),
               data = set1, weights = set1$iwt)
 
 # sampling and MSM weights
 ds <- svydesign(id = ~ cluster, weights = ~ nwt, strata = ~stratum, data = set1, nest = TRUE)
 
-m4.2 <- svycoxph( Surv(start, stop, died) ~ prison + cluster(id),
+m4.2 <- svycoxph( Surv(start, stop, died) ~ prison + as.factor(cage) +
+              male + race + cluster(id),
               design = ds)
 
 # tables with results
@@ -321,7 +312,7 @@ texreg(models_unw, include.rsquared = FALSE, include.aic = FALSE,
     custom.model.names = c("M1", "M1 MSM", "M2", "M2 MSM"),
     groups = list("Race (ref. Non-Hispanics/Blacks)" = 3:4, "Education (ref. $<$ HS)" = 6:8),
     custom.coef.map = name.map,
-    custom.note = "Robust standard errors in parenthesis. Age, Delinquency at 1980 and Parent's education coefficients omitted.",
+    custom.note = "Robust standard errors in parenthesis. Age, Delinquency at 1980 and Parent's education coefficient omitted.",
     booktabs = TRUE,
     dcolumn = TRUE,
     use.packages = FALSE,
@@ -330,7 +321,7 @@ texreg(models_unw, include.rsquared = FALSE, include.aic = FALSE,
     caption.above = TRUE,
     fontsize = "scriptsize",
     float.pos = "htp",
-    file = 'output/tables/models_nlsy_1.tex'
+    file = "output/models_nlsy_1.tex"
     )
 
 texreg(models_w, include.rsquared = FALSE, include.aic = FALSE,
@@ -350,30 +341,8 @@ texreg(models_w, include.rsquared = FALSE, include.aic = FALSE,
     caption.above = TRUE,
     fontsize = "scriptsize",
     float.pos = "htp",
-    file = 'output/tables/models_nlsy_2.tex'
+    file = "output/models_nlsy_2.tex"
     )
-
-# plots
-
-# newdata1 <- data.frame(iprison = 1,
-#                       cage = 0,
-#                       male = 1,
-#                       fracei = "Black" ,
-#                       liinc = 0,
-#                       ieduc = "less high school")
-
-# newdata2 <- data.frame(iprison = 0,
-#                       cage = 0,
-#                       male = 1,
-#                       fracei = "Black" ,
-#                       liinc = 0,
-#                       ieduc = "less high school")
-
-# plot1 <- getComparisonPlot(m1.1, data1 = newdata1, data2 = newdata2,
-#                   pos1 = c(25, 42), pos2 = c(0.3, 0.09))
-
-
-# TODO: create descriptive tables
 
 ####################################
 ####################################

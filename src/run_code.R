@@ -20,12 +20,16 @@ source("src/psid/02_define_variables_long_13.R")
 # models
 source("src/psid/03_survival_models_psid_13.R")
 
+# multiple imputation
+
+
 
 ##############################
 # nlsy analysis
 ##############################
 
-# load data
-source("src/nlsy79/01_load_data.R")
+# load data and format variables
+source("src/nlsy/01_load_data.R")
 
-source("src/nlsy79/03_survival_models_nlsy_adjusted.R")
+# models
+source("src/nlsy/02_survival_models_nlsy_adjusted.R")

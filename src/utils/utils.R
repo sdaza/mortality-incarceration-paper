@@ -20,7 +20,6 @@ get_dispersion <- function(model, data, variable) {
     return(sum(E^2) / (N - p))
 }
 
-
 # create cox-snell residual plot
 plot_coxsnell <- function(model, dat) {
   r <- model$residual
