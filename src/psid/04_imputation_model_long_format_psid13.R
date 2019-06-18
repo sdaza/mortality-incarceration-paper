@@ -16,13 +16,9 @@ library(survey)
 # load data
 ldat <- readRDS("output/psid_long_format_covariates_year_13.rds")
 
-# linstat
-# library(here)
-# source("functions.R")
-# load("long_selection_covariates_year_unit_13.Rdata")
-
 # number of cores
-number_cores <- detectCores()
+# number_cores <- detectCores() - 62
+number_cores <- 5
 number_imputations <- 100
 
 #################################
@@ -200,7 +196,7 @@ x <- temp[anyprison == 1 & anydeath == 1, .(N = sum(cum_temp_prison), age = max(
 temp[pid == 2083004, .(pid, year, prison95, tprison95, nrprison,
                       died, temp_prison, cum_temp_prison)]
 
-# get some descriptives for paper
+# get some descriptives for the paper
 summary(x$N) # 14
 table(x$N)
 hist(x$N, breaks = 12)
@@ -291,7 +287,7 @@ vcov_h_uwt_msm <- list()
 # create imputation, no seeds
 # chunks of 10 imputations
 
-max_value_loop <- ceil(number_imputations / number_cores)
+max_value_loop <- ceiling(number_imputations / number_cores)
 
 for (i in 1:max_value_loop) {
 
