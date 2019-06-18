@@ -21,6 +21,10 @@ source("src/psid/02_define_variables_long_psid13.R")
 source("src/psid/03_survival_models_psid_psid13.R")
 
 # multiple imputation
+source("src/psid/04_imputation_model_long_format_psid13.R")
+
+# summary tables using imputed data
+source("src/psid/05_process_imputations_psid13.R")
 
 
 ##############################

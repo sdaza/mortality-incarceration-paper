@@ -10,16 +10,15 @@ library(zoo)
 # load data
 
 dat <- readRDS("data/nlsy79selection.rds")
-# dat <- readRDS("data/nlsy79selection_old.rds")
-# newdata <- readRDS("data/new_data.rds")
-# newdata[, "hh1-1_2016" := NULL]
+nrow(dat)
+wt <- readRDS("data/nlsy79weights.rds")
+
+# dat <- readRDS("data/nlsy79selection_missing.rds")
+# newdata <- readRDS("data/type_residence.rds")
 # setkey(dat, caseid_1979)
 # setkey(newdata, caseid_1979)
-
 # dat = newdata[dat]
 # saveRDS(dat, "data/nlsy79selection.rds")
-
-wt <- readRDS("data/nlsy79weights.rds")
 
 ####################
 # define variables
@@ -41,6 +40,7 @@ years = c(1979:1994, seq(1996,2014, 2))
 setkey(wt, id)
 setkey(dat, id)
 nrow(dat)
+
 dat <- wt[dat]
 nrow(dat)
 
@@ -48,10 +48,10 @@ nrow(dat)
 setnames(dat, "sample_race_78scrn", "race")
 setnames(dat, "sample_sex_1979", "gender")
 
-table(dat$gender, useNA = "ifany")
-table(dat$race, useNA = "ifany")
+table(dat$gender)
+table(dat$race)
 dat[, sample := ifelse(type %in% 1:8, 1, ifelse(type %in% 9:14, 2, 3))]
-table(dat[, .(sample)], useNA="ifany")
+table(dat[, .(sample)])
 
 # age
 vars <- lookvar(dat, "^age")
@@ -61,8 +61,8 @@ length(vars)
 nvars = paste0("age", years)
 length(nvars)
 setnames(dat, vars, nvars)
-table(dat$age1979, useNA = "ifany")
-table(dat$age2012, useNA = "ifany")
+table(dat$age1979)
+table(dat$age2014)
 
 # missing data codes
 # -1  Refused
@@ -74,8 +74,9 @@ table(dat$age2012, useNA = "ifany")
 
 # NA for non-interview cases
 dat = dat[, lapply(.SD, function(x) ifelse(x == -5, NA, x))]
-table(dat$age1979, useNA = "ifany")
-table(dat$age1980, useNA = "ifany")
+table(dat$age1979)
+table(dat$age1980)
+table(dat$age1981)
 
 ##################################################
 # define variables and then change to long format
@@ -107,21 +108,21 @@ table(dat$age1980, useNA = "ifany")
 # parents' education
 lookvar(dat, "hgc")
 setnames(dat, c("hgc-mother_1979", "hgc-father_1979"), c("medu", "fedu"))
-table(dat$fedu, useNA = "ifany")
-table(dat$medu, useNA = "ifany")
+table(dat$fedu)
+table(dat$medu)
 
 dat[, c("fedu", "medu") := lapply(.SD, function(x) ifelse(x %in% c(-4, -3, -2, -1), NA, x)),
       .SDcols = c("fedu", "medu")]
 
 dat[, pedu := pmax(fedu, medu, na.rm = TRUE)]
-table(dat$pedu, useNA = "ifany")
+table(dat$pedu)
 
 # education
 vars = lookvar(dat, "hgc")
 setnames(dat, vars, paste0("edu", years))
 
-table(dat$edu1979, useNA = "ifany")
-table(dat$edu2014, useNA = "ifany")
+table(dat$edu1979)
+table(dat$edu2014)
 
 # welfare (pending), transform this variable separately
 # vars = paste0("welfare-amt-", years, "_revised_xrnd")
@@ -153,7 +154,7 @@ setnames(dat, vars, nvars)
 # nvars = paste0("working", years[years<2007])
 # setnames(dat, vars, nvars)
 
-table(dat$hoursworked1979, useNA = "ifany")
+table(dat$hoursworked1979)
 # hist(dat$hoursworked1979)
 # dat[, mean(hoursworked1979), esr_col_1979]
 
@@ -175,8 +176,8 @@ vars = lookvar(dat, "q11-4")
 nvars = paste0("healthw", years)
 setnames(dat, vars, nvars)
 
-table(dat$healthw1979, useNA = "ifany")
-table(dat$healthw2014, useNA = "ifany")
+table(dat$healthw1979)
+table(dat$healthw2014)
 
 # delinquency
 vars = lookvar(dat, "(delin-[1][0-9])|(delin-[4-9])|delin-20")
@@ -186,10 +187,10 @@ nvars = paste0("del", 1:17)
 setnames(dat, vars, nvars)
 
 dat[, (nvars) := lapply(.SD, function(x) ifelse(x < 0, NA, x)), .SDcols = nvars]
-table(dat$del1, useNA = "ifany")
-table(dat$del17, useNA = "ifany")
+table(dat$del1)
+table(dat$del17)
 
-dat[, deltot := rowscore(dat, nvars, p = 1/2)] # all
+dat[, deltot := rowscore(dat, nvars, p = 0)] # all
 summary(dat$deltot)
 
 # hist(log(dat$deltot))
@@ -211,8 +212,8 @@ vars = lookvar(dat, "hh1")
 nvars = paste0("resid", years)
 setnames(dat, vars, nvars)
 
-table(dat$resid1979, useNA = "ifany")
-table(dat$resid2000, useNA = "ifany")
+table(dat$resid1979)
+table(dat$resid2000)
 
 # code of jail / prison
 jail = c(3, rep(5, 25)) # different coding during first year, 3 versus 5
@@ -224,11 +225,11 @@ for (i in seq_along(years)) {
   dat[, paste0("prison", years[i]) := ifelse(get(resid[i]) == jail[i], 1, 0)]
 }
 
-table(dat$resid2004, useNA = "ifany" )
-table(dat$prison2004, useNA = "ifany")
+table(dat$resid2004 )
+table(dat$prison2004)
 
-table(dat$resid1979, useNA = "ifany" )
-table(dat$prison1979, useNA = "ifany" )
+table(dat$resid1979 )
+table(dat$prison1979 )
 
 # deaths
 rni = lookvar(dat, "rni")
@@ -236,10 +237,10 @@ length(rni)
 death = paste0("death", years[-1])
 death
 
-table(dat$rni_1980, useNA = "ifany")
+table(dat$rni_1980)
 dat[, (death) := lapply(.SD, function(x) ifelse(x == 65, 1, 0)), .SDcols = rni]
-table(dat$death1980, useNA = "ifany")
-table(dat$death2014, useNA = "ifany")
+table(dat$death1980)
+table(dat$death2014)
 
 # not interviewed people because incarcerated
 rni = lookvar(dat, "rni")
@@ -256,8 +257,8 @@ dat[, (incarcerated) := lapply(.SD,
                                function(x) ifelse(is.na(x), 0, x)),
                                .SDcols = incarcerated]
 
-table(dat$incarcerated1980, useNA = "ifany")
-table(dat$prison2014, useNA = "ifany")
+table(dat$incarcerated1980)
+table(dat$prison2014)
 
 table(dat[, .(incarcerated2006, prison2006)]) # different records
 table(dat[, .(incarcerated2014, prison2014)])
@@ -360,7 +361,7 @@ for (i in seq_along(years)) {
     ldat[time == i, year := years[i]]
 }
 
-table(ldat[, .(year)], useNA="ifany")
+table(ldat[, .(year)])
 
 # explore cases
 ids = unique(ldat$id)
@@ -373,31 +374,31 @@ ldat[id == sid,
 setkey(ldat, id, year)
 table(ldat$death)
 ldat[, ldeath := shift(death, type = "lead"), by = id]
-table(ldat$ldeath, useNA = "ifany")
+table(ldat$ldeath)
 
 replace_na_with_last = function(x,a=!is.na(x)) {
     x[which(a)[c(1,1:sum(a))][cumsum(a)+1]]
 }
 
 ldat[, ldeath := replace_na_with_last(ldeath), by = id]
-table(ldat$ldeath, useNA = "ifany")
-table(ldat$death, useNA = "ifany")
+table(ldat$ldeath)
+table(ldat$death)
 
 sid = sample(ids, 1)
 ldat[id == sid, .(id, death, ldeath)]
 
 ldat[, cumdeath := cumsum(ldeath), by = id]
-table(ldat$cumdeath, useNA = "ifany")
+table(ldat$cumdeath)
 
 ldat = ldat[cumdeath < 2]
-table(ldat$cumdeath, useNA = "ifany") # 816
-table(ldat$ldeath, useNA = "ifany")
+table(ldat$cumdeath) # 816
+table(ldat$ldeath)
 
 # define non-response and dropouts
 ldat[, response := 0]
 ldat[!is.na(age), response := 1]
 ldat[incarcerated == 1, response := 1]
-table(ldat$response, useNA = "ifany")
+table(ldat$response)
 
 setorder(ldat, -year)
 ldat[, cresp := cumsum(response), by = id]
@@ -410,7 +411,7 @@ ldat[, dropout := 0]
 ldat[, cresp := cumsum(cresp), id]
 ldat[, dropout := ifelse(year < 2014 & cresp == 1 & ldeath == 0,
                          1, dropout)]
-table(ldat$dropout, useNA = "ifany")
+table(ldat$dropout)
 
 setorder(ldat, year, id)
 sid = sample(ids, 1)
@@ -420,26 +421,26 @@ ldat[id == sid,
 
 table(ldat[, .(sample, dropout)])
 table(ldat[, .(year, dropout)])
-table(ldat$dropout, useNA = "ifany")
+table(ldat$dropout)
 
 table(ldat[, cumsum(dropout), id]$V1) # 4901
 
 # combine incarceration records
 ldat[, rprison := pmax(prison, incarcerated, na.rm = TRUE)]
-table(ldat$incarcerated, useNA = "ifany")
+table(ldat$incarcerated)
 
 # prison variable (just combine both records)
 ldat[ever_prison1980_release > 0 & ever_prison1980_release < 81, yprison := as.numeric(ever_prison1980_release) + 1900]
-table(ldat$yprison,  useNA = "ifany")
+table(ldat$yprison)
 ldat[, prison1980 := ifelse(year == yprison, 1, 0)][is.na(prison1980), prison1980 := 0]
-table(ldat$prison1980, useNA = "ifany")
+table(ldat$prison1980)
 
-table(ldat$rprison, useNA = "ifany")
+table(ldat$rprison)
 ldat[, rprison := pmax(rprison, prison1980, na.rm = TRUE)]
 
-table(ldat[, .(whynr, rprison)], useNA = "ifany")
+table(ldat[, .(whynr, rprison)])
 ldat[is.na(age) & year < 2004, rprison := NA]
-table(ldat$rprison, useNA = "ifany")
+table(ldat$rprison)
 
 setorder(ldat, year, id)
 ldat[id == sample(ids, 1),
@@ -473,8 +474,8 @@ ldat[, oyear := year]
 ldat[, year := nyear]
 
 ldat[id %in% ids, .(id, start, stop, year, age, count)]
-table(ldat$year, useNA = "ifany")
-table(ldat[year == 2014, whynr], useNA = "ifany") # all observed
+table(ldat$year)
+table(ldat[year == 2014, whynr]) # all observed
 
 # impute age function
 setkey(ldat, id, year)
@@ -546,7 +547,7 @@ summary(ldat$agei) # ok!
 
 # gender
 ldat[, male := ifelse(gender == 1, 1, 0)]
-table(ldat[, .(male)], useNA="ifany")
+table(ldat[, .(male)])
 
 # income
 summary(ldat$income)
@@ -554,34 +555,34 @@ ldat[, income := ifelse(income < 0, NA, income)]
 
 # died variable
 ldat[, died := ldeath]
-table(ldat$died, useNA = "ifany") # 681
+table(ldat$died) # 681
 
 # education
 setkey(ldat, id, year)
-table(ldat$edu, useNA = "ifany")
+table(ldat$edu)
 
 ldat[, edu := ifelse(edu < 0, NA, edu)]
-table(ldat$edu, useNA = "ifany")
+table(ldat$edu)
 
 # parents education
-table(ldat$pedu, useNA = "ifany") # time invariant
+table(ldat$pedu) # time invariant
 
 # married
-table(ldat[, .(mstatus)], useNA="ifany")
+table(ldat[, .(mstatus)])
 ldat[, mstatus := ifelse(mstatus < 0, NA, mstatus)]
 ldat[, married := ifelse(mstatus == 1 | mstatus == 5, 1, 0)]
-table(ldat[, .(married)], useNA="ifany")
+table(ldat[, .(married)])
 
 # health
-table(ldat[, .(healthw)], useNA="ifany")
+table(ldat[, .(healthw)])
 ldat[healthw == -4, healthw := 0][, healthw := ifelse(healthw < 0, NA, healthw)]
-table(ldat[, .(healthw)], useNA="ifany")
+table(ldat[, .(healthw)])
 
 # jobs
-table(ldat[, .(hoursworked)], useNA="ifany")
+table(ldat[, .(hoursworked)])
 ldat[hoursworked == -4, hoursworked := 0]
 ldat[, job := ifelse(hoursworked > 0, 1, 0)][hoursworked < 0, job := NA]
-table(ldat$job, useNA = "ifany")
+table(ldat$job)
 
 prop.table(table(ldat[year == 2000, job])) # not sure this is the best
 
@@ -592,7 +593,7 @@ remove(x)
 
 # race
 ldat[, race := factor(race, labels = c("hispanic", "black", "non-hispanic/non-black"))]
-table(ldat$race, useNA = "ifany")
+table(ldat$race)
 
 # select records 18 or above
 x = ldat[year >= 1980 & agei >= 18]
@@ -619,7 +620,6 @@ ldat[, magei := min(agei), id]
 table(ldat$male)
 
 # create cumulative prison variables!
-
 setkey(ldat, id, year)
 ldat[, tprison := rprison][is.na(tprison), tprison := 0]
 table(ldat$tprison)
@@ -642,18 +642,18 @@ lookvar(ldat, "prison")
 ldat[, iprison := ifelse(is.na(prison), 0, prison)]
 ldat[, prison := cumsum(iprison), id][, prison := ifelse(prison > 0, 1, 0)]
 ldat[, index_prison := cumsum(iprison), id]
-table(ldat$index_prison, useNA = "ifany")
+table(ldat$index_prison)
 
 ldat[, select := 1]
 
 # education
-table(ldat$edu, useNA = "ifany")
+table(ldat$edu)
 
 # education before imprisonment
 ldat[, index_edu := cumsum(!is.na(edu)), id]
 if ('before' %in% names(ldat)) { ldat[, before := NULL] }
 ldat[, before := as.numeric(any(index_prison <= index_edu)), id]
-table(ldat$before, useNA = "ifany")
+table(ldat$before)
 
 # define selection variable
 ldat[before == 0, select:= 0]
@@ -661,7 +661,7 @@ table(ldat$select)
 
 # check
 nrow(ldat[, max(select), .(select, id)]) == length(unique(ldat$id))
-table(ldat$select, useNA = "ifany")
+table(ldat$select)
 ldat[select == 0, .(id, year, agei, prison, edu)]
 
 # impute education forward, and then backward
@@ -674,7 +674,7 @@ ldat[select == 1, iedu := na.locf(iedu, fromLast=TRUE), id] # all cases, it is n
 ldat[, index_inc := cumsum(!is.na(income)), id]
 ldat[, before := NULL]
 ldat[, before := as.numeric(any(index_prison <= index_inc)), id]
-table(ldat$before, useNA = "ifany")
+table(ldat$before)
 
 # impute education forward, and then backward
 ldat[, income := ifelse(income == 0, 1, income)]
@@ -695,7 +695,7 @@ ldat[, liinc := scale(log(iinc), center = TRUE, scale = FALSE)]
 ldat[, index_health := cumsum(!is.na(healthw)), id]
 ldat[, before := NULL]
 ldat[, before := as.numeric(any(index_prison <= index_health)), id]
-table(ldat$before, useNA = "ifany")
+table(ldat$before)
 
 # define selection variable
 ldat[before == 0, select:= 0]
@@ -703,7 +703,7 @@ table(ldat$select)
 
 # check
 nrow(ldat[, max(select), .(select, id)]) == length(unique(ldat$id))
-table(ldat$select, useNA = "ifany")
+table(ldat$select)
 ldat[select == 0, .(id, year, agei, prison, healthw)]
 countmis(ldat[, .(healthw)])
 
@@ -711,7 +711,7 @@ countmis(ldat[, .(healthw)])
 ldat[, ihealthw := na.locf(healthw, na.rm = FALSE), id]
 ldat[select == 1, ihealthw := na.locf(ihealthw, fromLast=TRUE), id] # all cases, it is not relevant
 
-summary(ldat$ihealthw, useNA = "ifany")
+summary(ldat$ihealthw)
 
 # job
 
@@ -719,7 +719,7 @@ summary(ldat$ihealthw, useNA = "ifany")
 ldat[, index_job := cumsum(!is.na(job)), id]
 ldat[, before := NULL]
 ldat[, before := as.numeric(any(index_prison <= index_job)), id]
-table(ldat$before, useNA = "ifany")
+table(ldat$before)
 
 # define selection variable
 ldat[before == 0, select:= 0]
@@ -727,7 +727,7 @@ table(ldat$select)
 
 # check
 nrow(ldat[, max(select), .(select, id)]) == length(unique(ldat$id))
-table(ldat$select, useNA = "ifany")
+table(ldat$select)
 ldat[select == 0, .(id, year, agei, prison, job)]
 countmis(ldat[, .(job)])
 
@@ -735,7 +735,7 @@ countmis(ldat[, .(job)])
 ldat[, ijob := na.locf(job, na.rm = FALSE), id]
 ldat[select == 1, ijob := na.locf(ijob, fromLast=TRUE), id] # all cases, it is not relevant
 
-summary(ldat$ijob, useNA = "ifany")
+summary(ldat$ijob)
 
 # married
 
@@ -743,7 +743,7 @@ summary(ldat$ijob, useNA = "ifany")
 ldat[, index_married := cumsum(!is.na(job)), id]
 ldat[, before := NULL]
 ldat[, before := as.numeric(any(index_prison <= index_married)), id]
-table(ldat$before, useNA = "ifany")
+table(ldat$before)
 
 # define selection variable
 ldat[before == 0, select:= 0]
@@ -751,14 +751,14 @@ table(ldat$select)
 
 # check
 nrow(ldat[, max(select), .(select, id)]) == length(unique(ldat$id))
-table(ldat$select, useNA = "ifany")
+table(ldat$select)
 ldat[select == 0, .(id, year, agei, prison, married)]
 countmis(ldat[, .(married)])
 
 # impute education forward, and then backward
 ldat[, imarried := na.locf(married, na.rm = FALSE), id]
 ldat[select == 1, imarried := na.locf(imarried, fromLast=TRUE), id] # all cases, it is not relevant
-summary(ldat$imarried, useNA = "ifany")
+summary(ldat$imarried)
 
 # save data
 saveRDS(ldat, file = "output/nlsy79_long_format_covariates.rds")

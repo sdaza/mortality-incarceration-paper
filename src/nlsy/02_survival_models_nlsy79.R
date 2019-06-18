@@ -42,7 +42,7 @@ ldat[, mage := Min(agei), id]
 ldat[, cage := mage - 18]
 
 summary(ldat$cage)
-table(ldat$cage, useNA = "ifany")
+table(ldat$cage)
 
 lookvar(ldat, "edu")
 # categories of education
@@ -53,16 +53,16 @@ ldat[iedu > 15, ieduc := "college"]
 
 ldat[, ieduc := factor(ieduc, levels = c("less high school", "high school",
                                        "some college", "college"))]
-table(ldat$ieduc, useNA = "ifany")
+table(ldat$ieduc)
 
 # race
 ldat[, race := fct_relevel(race, c("non-hispanic/non-black", "black", "hispanic"))]
-table(ldat$race, useNA = "ifany")
+table(ldat$race)
 
 # gender
-table(ldat$gender, useNA = "ifany")
+table(ldat$gender)
 ldat[, male := ifelse(gender == 1, 1, 0)]
-table(ldat$male, useNA = "ifany")
+table(ldat$male)
 
 # parent's education
 ldat[pedu %in% 0:11, peduc := "less high school"]
@@ -72,7 +72,7 @@ ldat[pedu > 15, peduc := "college"]
 
 ldat[, peduc := factor(peduc, levels = c("less high school", "high school",
                                        "some college", "college"))]
-table(ldat$peduc, useNA = "ifany")
+table(ldat$peduc)
 
 table(ldat[, .(peduc, ieduc)])
 
@@ -99,25 +99,21 @@ setorder(ldat, year, id)
 
 table(ldat[start == 0, .(anyprison, anydeath)]) # 81
 
-
 ldat[, cum_temp_prison := ifelse(cum_temp_prison > 0, 0, 1)]
-
-
 
 ldat[id == sample(unique(ldat$id), 1), .(id, year, agei, prison)]
 summary(ldat$rprison)
 summary(ldat$tprison)
 
-
 x <- ldat[anyprison == 1 & anydeath == 1,
-  .(N = sum(cum_temp_prison)), .(id, male)]
+          .(N = sum(cum_temp_prison)), .(id, male)]
 
 ldat[id == 7461, .(id, year, agei, died,
-  tprison, cum_temp_prison)]
+     tprison, cum_temp_prison)]
 table(x$male)
 
 summary(x$N)
-table(x$N, useNA = "ifany")
+table(x$N)
 hist(x$N, breaks = 12)
 
 ids <- x[N < 5, id]
