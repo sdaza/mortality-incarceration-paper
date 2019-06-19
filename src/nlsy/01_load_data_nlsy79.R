@@ -740,7 +740,7 @@ summary(ldat$ijob)
 # married
 
 # married before imprisonment
-ldat[, index_married := cumsum(!is.na(job)), id]
+ldat[, index_married := cumsum(!is.na(married)), id]
 ldat[, before := NULL]
 ldat[, before := as.numeric(any(index_prison <= index_married)), id]
 table(ldat$before)
