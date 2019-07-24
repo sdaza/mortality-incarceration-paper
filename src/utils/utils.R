@@ -8,6 +8,8 @@
 library(texreg)
 library(survminer)
 
+# redefine table function
+table <- function (...) base::table(..., useNA = 'ifany')
 
 # compute dispersion for INLA model
 get_dispersion <- function(model, data, variable) {
@@ -117,4 +119,34 @@ extract.svycoxph <- function(model, include.events = TRUE, include.nobs = TRUE, 
 
 setMethod("extract", signature = className("svycoxph", "survival"),
     definition = extract.coxph)
+
+
+# extension to combine multiple imputation results
+extract.MIcombine <- function(model, obs = 0, events = 0) {
+    s <- summary(model)
+    coefficient.names <- rownames(s)
+    coefficients <- s$results
+    standard.errors <- s$se
+    z <- coefficients / standard.errors
+    significance <- 2 * pnorm(-abs(z))
+
+    gof <- numeric()
+    gof.names <- character()
+    gof.decimal <- logical()
+    gof <- c(obs, events)
+    gof.names <- c("Person-years", "Deaths")
+    gof.decimal <- c(FALSE, FALSE)
+
+    tr <- createTexreg(coef.names = coefficient.names,
+                       coef = coefficients,
+                       se = standard.errors,
+                       pvalues = significance,
+                       gof.names = gof.names,
+                       gof = gof,
+                       gof.decimal = gof.decimal)
+    return(tr)
+}
+
+setMethod("extract", signature = className("MIresult", "MItools"),
+    definition = extract.MIcombine)
 

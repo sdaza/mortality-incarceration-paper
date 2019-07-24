@@ -13,7 +13,9 @@ library(survminer)
 library(texreg)
 library(ipw)
 library(ggplot2)
+library(ggthemes)
 library(weights)
+library(haven)
 
 # load data
 ldat <- readRDS("output/psid_long_format_covariates_year_13.rds")
@@ -67,14 +69,12 @@ table(ldat$ieduc, useNA = "ifany")
 s / tot # 60%
 ns / tot # 30%
 
-
 summary(ldat$iwt)
-hist(ldat$iwt)
-hist(ldat$fwt)
+# hist(ldat$iwt)
+# hist(ldat$fwt)
 
 summary(ldat$fwt)
 length(unique(ldat[is.na(fwt), pid])) # 279 cases
-
 
 table(duplicated(ldat, by = c("family_id")))
 summary(ldat$agei)
@@ -98,7 +98,6 @@ ldat[pid == ids, .(pid, response, agei, cage, year, start, stop, liinc)]
 ids <- unique(ldat[death == 1, pid])
 ldat[pid == sample(ids, 1), .(pid, year, death, ydeath, died)]
 
-
 # recoding some variables
 
 # race
@@ -108,11 +107,7 @@ table(ldat$fracei, useNA = "ifany")
 
 table(ldat$ieduc, useNA = "ifany")
 
-# gender
-ldat[, male := gender]
-
 # time between death and last imprisonment recorded (descriptives)
-
 ldat[pid == sample(unique(ldat$pid), 1), .(pid, year, agei, prison95, nrprison)]
 
 table(ldat$nrprison)
@@ -138,6 +133,100 @@ setorder(ldat, year, pid)
 table(ldat[start == 0, .(anyprison, anydeath)]) # 94
 ldat[, cum_temp_prison := ifelse(cum_temp_prison > 0, 0, 1)]
 
+# cumulative iprison variable
+setorder(ldat, year, pid)
+ldat[, cum_iprison := cumsum(iprison), pid]
+ldat[, dcum_iprison := ifelse(cum_iprison <= 10, 1, 0)]
+
+# testing: dditional descriptives and plots
+setkey(ldat, pid, start)
+ldat[, .(pid, start, stop, iprison, died, agei)]
+ldat[, ntimes := .N, pid]
+ldat[, mage := min(agei), pid]
+
+test1 <- ldat[died == 1, .(pid, start, stop, anyprison, prison95,
+                           anrprison, iprison, ntimes, died, mage,
+                           myear, agei)]
+
+test1[, .(.N,
+          average_age_death = mean(agei),
+          median_age_death = median(agei),
+          average_age = mean(mage),
+          median_age = median(mage),
+          min_age = min(mage),
+          max_age = max(mage),
+          average_obs = mean(ntimes),
+          average_year = mean(myear),
+          median_obs = median(ntimes)), prison95]
+
+savepdf('output/age_death_distribution')
+ggplot(test1, aes(x = agei)) +
+  geom_density() +
+  labs(x = '\nAge of death',
+       y = 'Density\n') +
+  theme_minimal()
+dev.off()
+
+# ggplot(test1, aes(x=myear, group=iprison, color=as.factor(iprison))) +
+#   geom_density() +
+#   labs(x = 'year start observation', title = 'PSID year start observation')
+
+# ggplot(test1, aes(x=mage, group=iprison, color=as.factor(iprison))) +
+#   geom_density() +
+#   labs(x = 'age start observation', title = 'PSID age start observation')
+
+# test2 <- ldat[died== 0, head(.SD, 1), pid,
+#         .SDcols = c("start", "stop",
+#           "iprison", "anyprison", "ntimes", "died", "myear", "mage", "agei")]
+
+# test2[, .(.N,
+#           average_age_death = mean(agei),
+#           median_age_death = median(agei),
+#           average_age = mean(mage),
+#           median_age = median(mage),
+#           min_age = min(mage),
+#           max_age = max(mage),
+#           average_obs = mean(ntimes),
+#           average_year = mean(myear),
+#           median_obs = median(ntimes)), iprison]
+
+
+# ggplot(test2, aes(x=myear, group=iprison, color=as.factor(iprison))) +
+#   geom_density() +
+#   labs(x = 'year start observation', title = 'PSID year start observation')
+
+# ggplot(test2, aes(x=mage, group=anyprison, color=as.factor(anyprison))) +
+#   geom_density() +
+#   labs(x = 'age start observation', title = 'PSID age start observation')
+
+test3 <- ldat[iprison == 1, head(.SD, 1), pid,
+        .SDcols = c("start", "stop",
+          "iprison", "anyprison", "ntimes", "died", "myear", "mage", "agei")]
+
+savepdf('output/age_imprisonment_distribution')
+ggplot(test3, aes(x = agei)) +
+  geom_density() +
+  labs(x = 'Age First Imprisonment (based on the data)',
+       y = 'Density\n') +
+  theme_minimal()
+dev.off()
+
+setnames(test3, 'agei', 'age_incarceration')
+setnames(test1, 'agei', 'age_death')
+
+test4 = merge(test3[, .(pid, age_incarceration)], test1[, .(pid, age_death)], on='pid')
+test4[, diff_years := age_death - age_incarceration]
+
+savepdf('output/difference_age_death_imprisonment')
+ggplot(test4, aes(x = diff_years)) +
+  geom_density() +
+  labs(x = '\nDifference in years',
+       y = 'Density\n') +
+  theme_minimal()
+dev.off()
+
+
+
 #########################
 # survival analysis
 #########################
@@ -156,7 +245,6 @@ table(set1[, max(start), by = pid][, V1])
 table(set1[, min(start), by = pid][, V1])
 
 # descriptives for set1
-
 length(unique(set1$pid))
 
 wpct(set1[start == 0, male])
@@ -196,11 +284,12 @@ m1.1 <- coxph( Surv(start, stop, died) ~ iprison + cage
                + male + fracei +  liinc + ieduc  + cluster(pid),
               data = set195)
 
-# interaction prisonn age
-
-m1.1.1 <- coxph( Surv(start, stop, died) ~ iprison * cage
-                 + male + fracei +  liinc + ieduc  + cluster(pid),
+# interaction prison time
+m1.1.1 <- coxph( Surv(start, stop, died) ~ dcum_iprison + iprison + cage +
+                 + male + fracei + cluster(pid),
                 data = set195)
+
+summary(m1.1.1)
 
 ds <- svydesign(id = ~ cluster, weights = ~ fwt, strata=~stratum, data = set195, nest = TRUE)
 
@@ -218,9 +307,7 @@ m2.2 <- svycoxph( Surv(start, stop, died) ~ iprison + cage
                + male + fracei +  liinc + ieduc  + idghealth + cluster(pid),
                 design = ds)
 
-
 # marginal structural model
-
 temp1 <- ipwtm(exposure = dropout, family = "survival",
               numerator = ~ male + cage + fracei,
               denominator = ~ male + cage + fracei + iprison + liinc + ieduc,
@@ -422,6 +509,12 @@ savepdf("output/plot_psid_m1_1_30")
 print(plot_m1_1_30)
 dev.off()
 
-#############################
-# end script
-#############################
+
+# test non-proportional effects of incarceration
+# set195[, iprison_stop := iprison * stop]
+
+# m5.1 <- coxph( Surv(start, stop, died) ~ iprison + iprison_stop +  cage
+#                + male + fracei  + cluster(pid),
+#               data = set195)
+
+# summary(m5.1)

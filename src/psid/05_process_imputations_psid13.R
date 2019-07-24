@@ -4,7 +4,7 @@
 # author: sebastian daza
 ##############################
 
-#+ libraries
+# libraries
 library(sdazar)
 library(ggplot2)
 library(lattice)
@@ -13,68 +13,73 @@ library(mitools)
 library(texreg)
 library(survey)
 
-#################################
-#+ load imputation results
-##################################
+source('src/utils/utils.R')
 
-# weighted analysis
+# load imputation results
+
+max_imputations <- 50
+# observations and deaths
+load("output/imputations/obs_deaths.Rdata")
+
+# weighted models
 
 # models_wt
-load("output/models_wt.Rdata")
+load("output/imputations/models_wt.Rdata")
 
-m1 <- MIcombine(coeff_wt, vcov_wt)
+# number of imputations
+n_imputations <- length(coeff_wt)
+
+m1 <- MIcombine(coeff_wt[1:max_imputations], vcov_wt[1:max_imputations])
 screenreg(m1)
 
 # models_h_wt
-load("output/models_h_wt.Rdata")
+load("output/imputations/models_h_wt.Rdata")
 
-m2 <- MIcombine(coeff_h_wt, vcov_h_wt)
+m2 <- MIcombine(coeff_h_wt[1:max_imputations], vcov_h_wt[1:max_imputations])
 screenreg(m2)
 
 # models_wt_msm
-load("output/models_wt_msm.Rdata")
+load("output/imputations/models_wt_msm.Rdata")
 
-m3 <- MIcombine(coeff_wt_msm, vcov_wt_msm)
+m3 <- MIcombine(coeff_wt_msm[1:max_imputations], vcov_wt_msm[1:max_imputations])
 screenreg(m3)
 
 # models_h_wt_msm
-load("output/models_h_wt_msm.Rdata")
+load("output/imputations/models_h_wt_msm.Rdata")
 
-m4 <- MIcombine(coeff_h_wt_msm, vcov_h_wt_msm)
+m4 <- MIcombine(coeff_h_wt_msm[1:max_imputations], vcov_h_wt_msm[1:max_imputations])
 length(coeff_h_wt_msm)
 screenreg(m4)
 
 # unweighted models
-load("output/models_uwt.Rdata")
+load("output/imputations/models_uwt.Rdata")
 
-m5 <- MIcombine(coeff_uwt, vcov_uwt)
+m5 <- MIcombine(coeff_uwt[1:max_imputations], vcov_uwt[1:max_imputations])
 screenreg(m5)
 
 # models_h_uwt
-load("output/models_h_uwt.Rdata")
+load("output/imputations/models_h_uwt.Rdata")
 
-m6 <- MIcombine(coeff_h_uwt, vcov_h_uwt)
+m6 <- MIcombine(coeff_h_uwt[1:max_imputations], vcov_h_uwt[1:max_imputations])
 screenreg(m6)
 
 # models_uwt_msm
-load("output/models_uwt_msm.Rdata")
+load("output/imputations/models_uwt_msm.Rdata")
 
-m7 <- MIcombine(coeff_uwt_msm, vcov_uwt_msm)
+m7 <- MIcombine(coeff_uwt_msm[1:max_imputations], vcov_uwt_msm[1:max_imputations])
 screenreg(m7)
 
 # models_h_uwt_msm
-load("output/models_h_uwt_msm.Rdata")
+load("output/imputations/models_h_uwt_msm.Rdata")
 
-m8 <- MIcombine(coeff_h_uwt_msm, vcov_h_uwt_msm)
+m8 <- MIcombine(coeff_h_uwt_msm[1:max_imputations], vcov_h_uwt_msm[1:max_imputations])
 screenreg(m8)
 
 # summary list for texreg
 modelsw <- list(m1,m3,m2,m4)
 modelsuw <- list(m5,m7,m6,m8)
 
-#################################
 # tables with imputation results
-#################################
 
 name.map  <- list(gprison = "Prison",
                   cagei = "Age",
@@ -86,8 +91,9 @@ name.map  <- list(gprison = "Prison",
                   "ieducsome college" = "Some college",
                   "ieduccollege" = "College",
                   dghealth = "Poor health")
-
 texreg(modelsuw,
+       obs = N$observations,
+       events = N$deaths,
        stars = 0,
        custom.model.names = c("M1", "M1 MSM", "M2", "M2 MSM"),
        groups = list("Race (ref. White)" = 4:5, "Education (ref. $<$ HS)" = 7:9),
@@ -97,31 +103,29 @@ texreg(modelsuw,
        dcolumn = TRUE,
        use.packages = FALSE,
        label = "models_psid_imp_1",
-       caption = "Cox Survival Models on the effect of Imprisonment on Mortality, \\newline 100 Imputations, Unweighted, PSID 1968-2013",
+       caption = paste0("Cox Survival Models on the effect of Imprisonment on Mortality, \\newline ", max_imputations, " Imputations, Unweighted, PSID 1968-2013"),
        caption.above = TRUE,
        fontsize = "scriptsize",
        float.pos = "htp",
        file = "output/models_psid_imp_1.tex"
-       )
+)
 
 
 texreg(modelsw,
-    stars = 0,
-    custom.model.names = c("M1", "M1 MSM", "M2", "M2 MSM"),
-    groups = list("Race (ref. White)" = 4:5, "Education (ref. $<$ HS)" = 7:9),
-    custom.coef.map = name.map,
-    custom.note = "Robust standard errors in parenthesis.",
-    booktabs = TRUE,
-    dcolumn = TRUE,
-    use.packages = FALSE,
-    label = "models_psid_imp_2",
-    caption = "Cox Survival Models on the effect of Imprisonment on Mortality, \\newline 100 Imputations, Weighted, PSID 1968-2013",
-    caption.above = TRUE,
-    fontsize = "scriptsize",
-    float.pos = "htp",
-    file = "output/models_psid_imp_2.tex"
-    )
-
-############################
-# end of the script
-############################
+       obs = N$observations,
+       events = N$deaths,
+       stars = 0,
+       custom.model.names = c("M1", "M1 MSM", "M2", "M2 MSM"),
+       groups = list("Race (ref. White)" = 4:5, "Education (ref. $<$ HS)" = 7:9),
+       custom.coef.map = name.map,
+       custom.note = "Robust standard errors in parenthesis.",
+       booktabs = TRUE,
+       dcolumn = TRUE,
+       use.packages = FALSE,
+       label = "models_psid_imp_2",
+       caption = paste0("Cox Survival Models on the effect of Imprisonment on Mortality, \\newline ", max_imputations, " Imputations, Weighted, PSID 1968-2013"),
+       caption.above = TRUE,
+       fontsize = "scriptsize",
+       float.pos = "htp",
+       file = "output/models_psid_imp_2.tex"
+)

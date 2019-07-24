@@ -13,7 +13,7 @@ library(ggpubr)
 
 # load data
 ldat <- readRDS('output/psid_ind_long_selection_13.rds')
-wdat <- readRDS('output/psid_ind_wide_selection_13.rds')
+# wdat <- readRDS('output/psid_ind_wide_selection_13.rds')
 
 #########################
 # define variables
@@ -36,9 +36,7 @@ table(ldat[year == 2003, .(whynr, tysample)])
 missed_years <- seq(1998, 2013, by = 2) # to adjust this at the end
 missed_years
 
-##########################
-# expand records two years
-##########################
+# expand records two years for periods every two years
 
 # create time variable
 setkey(ldat, pid, year)
@@ -69,21 +67,6 @@ ldat[pid %in% ids, .(pid, start, stop, year, oyear, age, count)]
 table(ldat$year, useNA = "ifany")
 ldat[pid == 1988005, .(pid, year, oyear, age, rth, whynr, count)]
 table(ldat[year == 2013, whynr], useNA = "ifany") # right
-
-# variables of interest
-# age, ok
-# race, ok
-# two parents # no
-# parents education # no
-# gov. assistance # I don't know, for now I wouldn't include it
-# college degree ok
-# poverty # income
-# employment, ok
-# marital status, ok, but not asked to all
-# drug use # I have to check
-# violence # no
-# health problems # ok
-# health insurance # from where? I have to check
 
 # create sequence number
 # ldat[, s := seq(.N), by = pid]
@@ -154,10 +137,12 @@ setkey(ldat, year, pid)
 ldat[, response := 0]
 ldat[itrack %in% c(1,2), response := 1]
 ldat[whynr == 0, response := 1]
-# ldat[year %in% missed_years, response := 0] # do not include cases that are not part of the PSID sample
+# do not include cases that are not part of the PSID sample
+# ldat[year %in% missed_years, response := 0]
 
 table(ldat[, .(year, response)])
-ldat[died == 1, response := 1] # this is problematic for 686032
+# this is problematic for 686032
+ldat[died == 1, response := 1]
 
 ldat[pid == 686032, .(pid, ydeath, death, died, year)]
 
@@ -230,22 +215,26 @@ ldat[age == 0 | age == 999, age := NA] # set missing data
 summary(ldat$age)
 
 impute.age <- function(age, year) {
-  if (any(is.na(age))) {
-  min.age <- Min(age)
-  position <- which(age == min.age)[1] # ties
-  if (!is.na(position)) {
-   if (position > 1) { # initial values
-    for (i in 1:(position-1)) {
-      age[position - i] <- age[position] - i
+    if (any(is.na(age))) {
+        min.age <- Min(age)
+        # ties
+        position <- which(age == min.age)[1]
+        if (!is.na(position)) {
+            # initial values
+            if (position > 1) {
+                for (i in 1:(position-1)) {
+                    age[position - i] <- age[position] - i
+                }
+            }
+            # missing data position
+            missing <- which(is.na(age))
+            for (i in missing) {
+                age[i] = age[i-1] + (year[i] - year[i-1])
+            }
+        }
+        else { age = as.numeric(NA) }
     }
-    }
-  missing <- which(is.na(age)) # missing data position
-  for (i in missing) {
-    age[i] = age[i-1] + (year[i] - year[i-1])
-  }
-  } else { age = as.numeric(NA) }
-}
-return(age)
+    return(age)
 }
 
 setkey(ldat, pid, year)
@@ -285,7 +274,8 @@ table(ldat[, .(anyprison = any(nrprison == 1, na.rm = TRUE)), pid][,
 table(ldat[, .(anyprison = any(prison1995 == 1, na.rm = TRUE)), pid][,
     anyprison])
 
-prop.table(table(ldat[, .(anyprison = any(pmax(nrprison, prison1995, na.rm = TRUE) == 1, na.rm = TRUE)), pid][,anyprison]))
+prop.table(table(ldat[, .(anyprison = any(pmax(nrprison, prison1995, na.rm = TRUE) == 1,
+                                          na.rm = TRUE)), pid][, anyprison]))
 
 table(ldat[, .(anyprison = any(pmax(nrprison, prison1995, na.rm = TRUE) == 1, na.rm = TRUE)), pid][,
                 anyprison])
@@ -296,7 +286,6 @@ ldat[response == 0, nrprison := NA]
 table(ldat$nrprison, useNA = "ifany")
 table(ldat[, .(nrprison, year)], useNA = "ifany")
 table(ldat[, .(died, year)], useNA = "ifany") # only 71 according to PSID
-
 
 # based on non-response
 # temp <- ldat[any18 > 0 & whynr == 14, .(pid, year)][, .(mpryr = min(year),
@@ -323,9 +312,11 @@ table(ldat[, .(died, year)], useNA = "ifany") # only 71 according to PSID
 
 # ldat <- temp[ldat]
 
-ldat[, prison95 := 0] # different from prison1995 (original variable)
+# different from prison1995 (original variable)
+ldat[, prison95 := 0]
 summary(ldat$yprison1995)
-ldat[agei >= 18 & yprison1995 <= year, prison95 := 1] # I am not considering missing records here
+# I am not considering missing records here
+ldat[agei >= 18 & yprison1995 <= year, prison95 := 1]
 table(ldat$prison95, useNA = "ifany")
 
 # ids <- unique(ldat[anyprison95 == 1, pid])
@@ -359,6 +350,8 @@ ldat[pid == sample(ids, 1), .(pid, year, agei, whynr, itrack, response,
 # covariates
 #######################
 
+# time-invariate covariates
+
 # create head-wife indicator
 ldat[year < 1983, head := ifelse(sn == 1 & rth == 1, 1, 0)]
 ldat[year >= 1983, head := ifelse(sn == 1 & rth == 10, 1, 0)]
@@ -370,16 +363,12 @@ ldat[year >= 1983, wife := ifelse(sn == 2 & rth == 20, 1, 0)]
 table(ldat$wife)
 table(ldat[, .(wife, year)])
 
-#############
 # gender
-#############
 
 ldat[, male := ifelse(gender == 1, 1, 0)]
 table(ldat$male)
 
-###################
 # race
-###################
 
 ldat[hh_race %in% c(0,9), hh_race := NA]
 ldat[ww_race %in% c(0,9), ww_race := NA]
@@ -420,9 +409,11 @@ table(ldat$frace, useNA = "ifany")
 
 table(ldat[, .(year, frace)])
 
-################
+##########################
+# time-varying covariates
+##########################
+
 # education
-################
 
 # check codes
 ldat[, edu := ifelse(edu %in% c(0, 98, 99), NA, edu)]
@@ -432,27 +423,28 @@ setkey(ldat, pid, year)
 
 if ("edui" %in% names(ldat)) { ldat[, edui := NULL] }
 # impute forward only for ages 30 or higher
-ldat[agei > 30, edui := na.locf(edu, na.rm = FALSE), pid] # last value carried forward
+# last value carried forward
+ldat[agei > 30, edui := na.locf(edu, na.rm = FALSE), pid]
 ldat[agei <= 30, edui := edu]
 table(ldat$edui, useNA = "ifany")
 
-table(ldat[is.na(edui), head]) # this looks ok!
+# this looks ok!
+table(ldat[is.na(edui), head])
 table(ldat[is.na(edui), wife])
-
 table(ldat[, .(year, edui)])
 
 # create last forward imputation for education
-
 setkey(ldat, pid, year)
 
 # create index prison variable
-
 table(ldat$nrprison, useNA = "ifany")
 table(ldat$prison95, useNA = "ifany")
 
-ldat[, iprison := na.locf(nrprison, na.rm = FALSE), pid] # imputing
+# imputation nrprison
+ldat[, iprison := na.locf(nrprison, na.rm = FALSE), pid]
 ldat[, anrprison := cumsum(iprison), pid][, anrprison := ifelse(anrprison > 0, 1, 0)]
 table(ldat$iprison, useNA = "ifany")
+
 ldat[, iprison := pmax(prison95, anrprison)]
 ldat[, iprison := cumsum(iprison), pid][, iprison := ifelse(iprison > 0, 1, 0)]
 table(ldat$iprison, useNA = "ifany")
@@ -468,7 +460,7 @@ table(ldat$before, useNA = "ifany")
 # define selection variable
 ldat[, select := NULL]
 ldat[, select := 1]
-ldat[before == 0, select:= 0]
+ldat[before == 0, select := 0]
 
 # check
 nrow(ldat[, max(select), .(select, pid)]) == length(unique(ldat$pid))
@@ -477,7 +469,8 @@ ldat[select == 0, .(pid, year, agei, iprison, edu)]
 
 # impute education forward, and then backward
 ldat[, iedu := na.locf(edu, na.rm = FALSE), pid]
-ldat[select == 1, iedu := na.locf(iedu, fromLast=TRUE), pid] # all cases, it is not relevant
+# all cases, it is not relevant
+ldat[select == 1, iedu := na.locf(iedu, fromLast=TRUE), pid]
 
 table(ldat$iedu, useNA = "ifany")
 
@@ -491,7 +484,8 @@ table(ldat$iedu, useNA = "ifany")
 # summary(ldat[year == 1990, inc])
 # summary(ldat[year == 2001, inc])
 
-ldat[inc == 9999999, inc := NA] # latino sample or residual category
+# latino sample or residual category
+ldat[inc == 9999999, inc := NA]
 
 # remove data for non-existent waves
 # ldat[year %in% missed_years | response == 0, inc := NA]
@@ -516,7 +510,7 @@ ldat[, before := as.numeric(any(index_prison <= index_inc)), pid]
 table(ldat$before, useNA = "ifany")
 
 # define selection variable
-ldat[before == 0, select:= 0]
+ldat[before == 0, select := 0]
 
 # check
 nrow(ldat[, max(select), .(select, pid)]) == length(unique(ldat$pid))
@@ -594,11 +588,15 @@ ldat[pid %in% ids, .(pid, sn, rth, gened,wife, head, agei, year, type_health,
                      ghealth, hh_health, ww_health, ofu_dhealth,
                      shealth, ofu_shealth1986)]
 
-# recode variable
-ldat[type_health == 1 & ghealth %in% c(1:3), dghealth := 0] # good or regular health
-ldat[type_health == 1 & ghealth %in% c(4:5), dghealth := 1] # poor health
-ldat[type_health == 2 & ghealth == 1 , dghealth := 0] # good health (I changed the code above)
-ldat[type_health == 2 & ghealth == 5 , dghealth := 1] # poor health
+# recode health variable
+# good or regular health
+ldat[type_health == 1 & ghealth %in% c(1:3), dghealth := 0]
+# poor health
+ldat[type_health == 1 & ghealth %in% c(4:5), dghealth := 1]
+# good health (I changed the code above)
+ldat[type_health == 2 & ghealth == 1 , dghealth := 0]
+# poor health
+ldat[type_health == 2 & ghealth == 5 , dghealth := 1]
 
 table(ldat$dghealth, useNA = "ifany")
 table(ldat$ghealth, useNA = "ifany")
@@ -613,7 +611,6 @@ table(ldat[, .(dghealth, year)], useNA = "ifany")
 # imputing health variable
 
 # impute health last observed value
-
 ldat[, index_health := cumsum(!is.na(dghealth)), pid]
 ldat[, before := NULL]
 ldat[, before := as.numeric(any(index_prison <= index_health)), pid]
@@ -629,11 +626,12 @@ ldat[select == 0, .(pid, year, agei, iprison, dghealth)]
 
 # impute education forward, and then backward
 ldat[, idghealth := na.locf(dghealth, na.rm = FALSE), pid]
-ldat[select == 1, idghealth := na.locf(idghealth, fromLast=TRUE), pid] # all cases, it is not relevant
+# all cases, it is not relevant
+ldat[select == 1, idghealth := na.locf(idghealth, fromLast=TRUE), pid]
 
 summary(ldat$idghealth, useNA = "ifany")
 
-# # couples
+# # couples (not used)
 
 # # this variable links pairs of individuals who were married or
 # # permanently cohabiting at the time of the 1968 interview.
@@ -671,13 +669,19 @@ summary(ldat$idghealth, useNA = "ifany")
 # table(ldat[, .(year, fempl)])
 # save data
 
-# assign weights, 18 year old or above
+# assign sampling weights, 18 year old or above
 setkey(ldat, pid, year)
 summary(ldat$iwt)
-ldat[, fwt := head(iwt, 1L), pid] # it seems right!
+
+# it seems right!
+ldat[, fwt := head(iwt, 1L), pid]
 summary(ldat$fwt)
-length(unique(ldat[is.na(fwt), pid])) # 459, ok!
-length(unique(ldat[is.na(iwt), pid])) # 459, ok!
+
+# 459, ok!
+length(unique(ldat[is.na(fwt), pid]))
+
+# 459, ok!
+length(unique(ldat[is.na(iwt), pid]))
 
 # test first observation (18 years old or more)
 ldat[, s := 1:.N, pid]
@@ -694,7 +698,7 @@ ldat <- ldat[any18 > 0] # 15 in some cases, ok!
 summary(ldat$agei)
 
 ######################
-# some plots
+# some descriptive plots
 ######################
 
 # deaths
@@ -706,7 +710,6 @@ temp <- rbind(temp1, temp2)
 ggplot(temp, aes(x = year, y = deaths, color = type)) + geom_line() +
   labs(title = "Proportion respondents who died, PSID, sample and non-sample respondents",
        subtitle = "Longitudinal varying weights")
-
 
 # plot prison rate
 temp1 <- ldat[!is.na(iwt), .(prison = mean(nrprison, na.rm = TRUE)), year]
@@ -731,15 +734,9 @@ savepdf("output/imprisonment_psid")
 print(g)
 dev.off()
 
-ggplot(ldat[death == 1], aes(age)) + geom_density() + theme_minimal()
-
  # number of cases
 length(unique(ldat$pid))
 anyDuplicated(ldat[, family_id])
 
 # save data
 saveRDS(ldat, file = "output/psid_long_format_covariates_year_13.rds")
-
-#############################
-# end script
-#############################

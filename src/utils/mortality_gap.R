@@ -8,11 +8,7 @@ library(sdazar)
 library(stringr)
 library(xtable)
 
-library(here)
-setwd(here("05Research/sdaza"))
-
-
-#+ function decomposition
+# function decomposition
 getAB <- function(mort1, mort2, incar1, incar2, p1, rr) {
 
   d = mort1 - mort2
@@ -36,7 +32,7 @@ getAB <- function(mort1, mort2, incar1, incar2, p1, rr) {
 
 }
 
-#+ read mortality data
+# read mortality data
 ukmx <- fread("data/mortalityUK2011.csv")
 ukmx[, nage := as.numeric(str_extract(age, "^[0-9]+"))]
 table(ukmx$nage, useNA = "ifany")
@@ -47,7 +43,7 @@ usmx[, nage := as.numeric(str_extract(age, "^[0-9]+"))]
 table(usmx$nage, useNA = "ifany")
 str(usmx)
 
-# selection relevant rows
+# selection relevant rows to extract data
 (uk_mort_20 <- sum(ukmx[nage >= 20, all]))
 (us_mort_20 <- sum(usmx[nage >= 20, all]))
 
@@ -63,29 +59,32 @@ us_mort_20_45 * 1000
 uk_mort_20_70 * 1000
 us_mort_20_70 * 1000
 
-# create table
+# define survival coefficients to assess
+survival_coef <- sort(c(0.69, 0.63, 0.74, 0.70, 0.99, 0.88,
+                        0.91, 0.92, 0.57))
 
-survival_coef <- c(0.54, 0.60, 0.74, 0.79, 0.91, 0.99)
-#+ decomposition
+# decomposition
 results <- list()
 for( i in seq_along(survival_coef)) {
-  results[[i]] <- getAB(mort1 = us_mort_20_45,
-    mort2 = uk_mort_20_45,
-    incar1 = 707,
-    incar2 = 148,
-    p1 = .0209,
-    rr = exp(survival_coef[i]))
+    results[[i]] <- getAB(mort1 = us_mort_20_45,
+                          mort2 = uk_mort_20_45,
+                          incar1 = 707,
+                          incar2 = 148,
+                          p1 = .0209,
+                          rr = exp(survival_coef[i]))
 }
 
 (tab_20_45 <-  rbindlist(results))
-
 rm(results)
 
-survival_coef <- c(0.54, 0.60, 0.74, 0.79, 0.91, 0.99)
+
 results <- list()
 for( i in seq_along(survival_coef)) {
-  results[[i]] <- getAB(mort1 = us_mort_20_70, mort2 = uk_mort_20_70, incar1 = 707, incar2 = 148,
-  p1 = .0209, rr = exp(survival_coef[i]))
+    results[[i]] <- getAB(mort1 = us_mort_20_70,
+                          mort2 = uk_mort_20_70,
+                          incar1 = 707,
+                          incar2 = 148,
+                          p1 = .0209, rr = exp(survival_coef[i]))
 }
 
 (tab_20_70 <-  rbindlist(results))
@@ -98,15 +97,10 @@ tab <- rbind(tab_20_45, tab_20_70)
 
 # create table
 print(xtable(tab,
-  caption = "Imprisonment contribution to Mortality gap, U.S. and U.K."),
-  caption.placement = "top", include.rownames = FALSE,
-  table.placement = "htp",
-  file = here("06WorkingPapers/Manuscript/tables", "gap.tex"),
-  sanitize.text.function=function(x){x}
+             caption = "Imprisonment contribution to Mortality gap, U.S. and U.K."),
+             caption.placement = "top", include.rownames = FALSE,
+             table.placement = "htp",
+             file = here("output/tables", "gap.tex"),
+             sanitize.text.function=function(x){x}
 )
-
 rm(tab)
-
-#############################
-# end of the script
-#############################

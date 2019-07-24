@@ -82,7 +82,12 @@ table(ldat[, .(peduc, ieduc)])
 summary(ldat$wt)
 hist(ldat$wt)
 
-# time between release and death
+# cumulative iprison variable
+setorder(ldat, year, id)
+ldat[, cum_prison := cumsum(prison), id]
+table(ldat$cum_prison)
+
+ldat[, dcum_prison := ifelse(cum_prison <= 10, 1, 0)]
 
 # time between death and last imprisonment recorded (descriptives)
 
@@ -130,6 +135,85 @@ y  <- ldat[id %in% ids, .(age = max(agei)), id]$age
 quantile(y, c(0.25, 0.5, 0.75))
 summary(ldat[anyprison == 1, agei])
 
+# additional descriptives
+setkey(ldat, id, start)
+ldat[, .(id, start, stop, prison, died, agei)]
+ldat[, ntimes := .N, id]
+ldat[, mage := min(agei), id]
+
+table(ldat$year)
+
+test1 <- ldat[died == 1, .(id, start, stop, prison, ntimes, died, mage, myear, agei)]
+
+test1[, .(.N,
+          average_age_death = mean(agei),
+          median_age_death = median(agei),
+          average_age = mean(mage),
+          median_age = median(mage),
+          min_age = min(mage),
+          max_age = max(mage),
+          average_obs = mean(ntimes),
+          average_year = mean(myear),
+          median_obs = median(ntimes)), prison]
+
+
+ggplot(test1, aes(x=agei, group=prison, color=as.factor(prison))) +
+  geom_density() +
+  labs(x = 'age of death', title = 'NLSY age of death incarceration')
+
+ggplot(test1, aes(x=myear, group=prison, color=as.factor(prison))) +
+  geom_density() +
+  labs(x = 'year start observation', title = 'NSLY year start observation')
+
+ggplot(test1, aes(x=mage, group=prison, color=as.factor(prison))) +
+  geom_density() +
+  labs(x = 'age start observation', title = 'NLSY age start observation')
+
+test2 <- ldat[died == 0, head(.SD, 1), id,
+        .SDcols = c("start", "stop",
+          "prison", "anyprison", "ntimes", "died", "myear", "mage", "agei")]
+
+test2[, .(.N,
+          average_age_death = mean(agei),
+          median_age_death = median(agei),
+          average_age = mean(mage),
+          median_age = median(mage),
+          min_age = min(mage),
+          max_age = max(mage),
+          average_obs = mean(ntimes),
+          average_year = mean(myear),
+          median_obs = median(ntimes)), prison]
+
+ggplot(test2, aes(x=agei, group=prison, color=as.factor(prison))) +
+  geom_density() +
+  labs(x = 'age of death', title = 'NLSY age of death incarceration')
+
+ggplot(test2, aes(x=myear, group=prison, color=as.factor(prison))) +
+  geom_density() +
+  labs(x = 'year start observation', title = 'NLSY year start observation')
+
+ggplot(test2, aes(x=mage, group=prison, color=as.factor(prison))) +
+  geom_density() +
+  labs(x = 'age start observation', title = 'NLSY age start observation')
+
+test3 <- ldat[prison == 1, head(.SD, 1), id,
+        .SDcols = c("start", "stop",
+          "prison", "anyprison", "ntimes", "died", "myear", "mage", "agei")]
+
+ggplot(test3, aes(x=agei)) +
+  geom_density() +
+  labs(x = 'age first imprisonment (in the data)', title = 'NLSY age imprisonment')
+
+setnames(test3, 'agei', 'age_incarceration')
+setnames(test1, 'agei', 'age_death')
+
+test4 = merge(test3[, .(id, age_incarceration)], test1[, .(id, age_death)], on='id')
+
+test4[, diff_years := age_death - age_incarceration]
+hist(test4$diff_years, main='NLSY difference age death and age incarceration',
+     xlab = 'years', breaks = 25)
+
+
 #########################
 # survival analysis
 #########################
@@ -168,6 +252,12 @@ m1.1 <- coxph( Surv(start, stop, died) ~ prison + as.factor(cage) +
               + ijob + imarried + cluster(id),
               data = set1)
 
+
+m1.1.1 <- coxph( Surv(start, stop, died) ~ prison + dcum_prison + as.factor(cage) +
+              male + race + cluster(id),
+              data = set1)
+
+summary(m1.1.1)
 
 ds <- svydesign(id = ~ cluster, weights = ~ wt, strata=~stratum, data = set1, nest = TRUE)
 
@@ -341,4 +431,18 @@ texreg(models_w, include.rsquared = FALSE, include.aic = FALSE,
     )
 
 ####################################
+####################################
+
+# non-proportional effects
+
+set1[, prison_stop := prison * stop]
+m5.1 <- coxph( Surv(start, stop, died) ~ prison + prison_stop + as.factor(cage) +
+              male + race + cluster(id),
+              data = set1)
+
+summary(m5.1)
+
+
+####################################
+# end of script
 ####################################

@@ -1,0 +1,43 @@
+
+\begin{table}[htp]
+\caption{Cox Survival Models on the effect of Imprisonment on Mortality, \newline 50 Imputations, Unweighted, PSID 1968-2013}
+\begin{center}
+\begin{scriptsize}
+\begin{tabular}{l D{.}{.}{6.3} D{.}{.}{6.3} D{.}{.}{6.3} D{.}{.}{6.3} }
+\toprule
+ & \multicolumn{1}{c}{M1} & \multicolumn{1}{c}{M1 MSM} & \multicolumn{1}{c}{M2} & \multicolumn{1}{c}{M2 MSM} \\
+\midrule
+Prison                     & 0.71   & 0.65   & 0.71   & 0.64   \\
+                           & (0.16) & (0.23) & (0.15) & (0.23) \\
+Age                        & 0.08   & 0.08   & 0.07   & 0.08   \\
+                           & (0.00) & (0.00) & (0.00) & (0.00) \\
+Male                       & 0.44   & 0.42   & 0.45   & 0.42   \\
+                           & (0.04) & (0.04) & (0.04) & (0.04) \\
+Race (ref. White)          &        &        &        &        \\
+                           &        &        &        &        \\
+\quad Black                & 0.37   & 0.48   & 0.33   & 0.48   \\
+                           & (0.05) & (0.05) & (0.05) & (0.05) \\
+\quad Other race + Unknown & 0.06   & 0.14   & 0.03   & 0.14   \\
+                           & (0.10) & (0.11) & (0.10) & (0.11) \\
+Log Income, centered       & -0.04  &        & -0.02  &        \\
+                           & (0.02) &        & (0.02) &        \\
+Education (ref. $<$ HS)    &        &        &        &        \\
+                           &        &        &        &        \\
+\quad High school          & -0.08  &        & -0.03  &        \\
+                           & (0.05) &        & (0.05) &        \\
+\quad Some college         & -0.34  &        & -0.26  &        \\
+                           & (0.07) &        & (0.07) &        \\
+\quad College              & -0.73  &        & -0.63  &        \\
+                           & (0.07) &        & (0.08) &        \\
+Poor health                &        &        & 0.53   &        \\
+                           &        &        & (0.07) &        \\
+\midrule
+Person-years               & 633519 & 633519 & 633519 & 633519 \\
+Deaths                     & 2803   & 2803   & 2803   & 2803   \\
+\bottomrule
+\multicolumn{5}{l}{\tiny{Robust standard errors in parenthesis.}}
+\end{tabular}
+\end{scriptsize}
+\label{models_psid_imp_1}
+\end{center}
+\end{table}
