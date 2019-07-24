@@ -20,12 +20,14 @@ source("src/psid/02_define_variables_long_psid13.R")
 # models
 source("src/psid/03_survival_models_psid_psid13.R")
 
-# multiple imputation
-source("src/psid/04_imputation_model_long_format_psid13.R")
+# multiple imputation (remote server)
+# source("src/psid/04_imputation_model_long_format_psid13.R")
 
 # summary tables using imputed data
 source("src/psid/05_process_imputations_psid13.R")
 
+# run gompertz models in stata
+RStata::stata("src/psid/06_gompertz_models.do")
 
 ##############################
 # nlsy analysis

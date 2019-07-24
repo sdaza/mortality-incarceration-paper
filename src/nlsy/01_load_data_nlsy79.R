@@ -222,7 +222,7 @@ length(jail)
 length(resid)
 
 for (i in seq_along(years)) {
-  dat[, paste0("prison", years[i]) := ifelse(get(resid[i]) == jail[i], 1, 0)]
+    dat[, paste0("prison", years[i]) := ifelse(get(resid[i]) == jail[i], 1, 0)]
 }
 
 table(dat$resid2004 )
@@ -260,7 +260,8 @@ dat[, (incarcerated) := lapply(.SD,
 table(dat$incarcerated1980)
 table(dat$prison2014)
 
-table(dat[, .(incarcerated2006, prison2006)]) # different records
+# different records
+table(dat[, .(incarcerated2006, prison2006)])
 table(dat[, .(incarcerated2014, prison2014)])
 
 # non-response (excluding incarceration)
@@ -515,36 +516,6 @@ summary(ldat$agei) # ok!
 # assign missing data values
 ##############################
 
-# deaths ok
-# incarceration ok
-# age ok
-# race ok
-# gender ok
-# parents' education ok max
-# respondent's education ok
-# welfare
-# job ?
-# income ok
-# marriage ok
-# health insurance (1984)
-# health issues (job) ok
-
-# delinquency (1980) ok
-
-# substance use (1980)
-# cigarette use
-# violence
-# locus of control
-# criminal contact ok, to create a better incarceration measure
-
-# missing data codes
-# -1  Refused
-# -2  Dont know
-# -3  Invalid missing
-# -4  Valid missing
-# -5  Non-interview
-# 1 to 4 are item non-response
-
 # gender
 ldat[, male := ifelse(gender == 1, 1, 0)]
 table(ldat[, .(male)])
@@ -762,5 +733,3 @@ summary(ldat$imarried)
 
 # save data
 saveRDS(ldat, file = "output/nlsy79_long_format_covariates.rds")
-
-#############################

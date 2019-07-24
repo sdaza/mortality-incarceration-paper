@@ -17,7 +17,6 @@ source('src/utils/utils.R')
 
 # load imputation results
 
-max_imputations <- 50
 # observations and deaths
 load("output/imputations/obs_deaths.Rdata")
 
@@ -29,50 +28,50 @@ load("output/imputations/models_wt.Rdata")
 # number of imputations
 n_imputations <- length(coeff_wt)
 
-m1 <- MIcombine(coeff_wt[1:max_imputations], vcov_wt[1:max_imputations])
+m1 <- MIcombine(coeff_wt, vcov_wt)
 screenreg(m1)
 
 # models_h_wt
 load("output/imputations/models_h_wt.Rdata")
 
-m2 <- MIcombine(coeff_h_wt[1:max_imputations], vcov_h_wt[1:max_imputations])
+m2 <- MIcombine(coeff_h_wt, vcov_h_wt)
 screenreg(m2)
 
 # models_wt_msm
 load("output/imputations/models_wt_msm.Rdata")
 
-m3 <- MIcombine(coeff_wt_msm[1:max_imputations], vcov_wt_msm[1:max_imputations])
+m3 <- MIcombine(coeff_wt_msm, vcov_wt_msm)
 screenreg(m3)
 
 # models_h_wt_msm
 load("output/imputations/models_h_wt_msm.Rdata")
 
-m4 <- MIcombine(coeff_h_wt_msm[1:max_imputations], vcov_h_wt_msm[1:max_imputations])
+m4 <- MIcombine(coeff_h_wt_msm, vcov_h_wt_msm)
 length(coeff_h_wt_msm)
 screenreg(m4)
 
 # unweighted models
 load("output/imputations/models_uwt.Rdata")
 
-m5 <- MIcombine(coeff_uwt[1:max_imputations], vcov_uwt[1:max_imputations])
+m5 <- MIcombine(coeff_uwt, vcov_uwt)
 screenreg(m5)
 
 # models_h_uwt
 load("output/imputations/models_h_uwt.Rdata")
 
-m6 <- MIcombine(coeff_h_uwt[1:max_imputations], vcov_h_uwt[1:max_imputations])
+m6 <- MIcombine(coeff_h_uwt, vcov_h_uwt)
 screenreg(m6)
 
 # models_uwt_msm
 load("output/imputations/models_uwt_msm.Rdata")
 
-m7 <- MIcombine(coeff_uwt_msm[1:max_imputations], vcov_uwt_msm[1:max_imputations])
+m7 <- MIcombine(coeff_uwt_msm, vcov_uwt_msm)
 screenreg(m7)
 
 # models_h_uwt_msm
 load("output/imputations/models_h_uwt_msm.Rdata")
 
-m8 <- MIcombine(coeff_h_uwt_msm[1:max_imputations], vcov_h_uwt_msm[1:max_imputations])
+m8 <- MIcombine(coeff_h_uwt_msm, vcov_h_uwt_msm)
 screenreg(m8)
 
 # summary list for texreg
@@ -103,7 +102,7 @@ texreg(modelsuw,
        dcolumn = TRUE,
        use.packages = FALSE,
        label = "models_psid_imp_1",
-       caption = paste0("Cox Survival Models on the effect of Imprisonment on Mortality, \\newline ", max_imputations, " Imputations, Unweighted, PSID 1968-2013"),
+       caption = paste0("Cox Survival Models on the effect of Imprisonment on Mortality, \\newline ", n_imputations, " Imputations, Unweighted, PSID 1968-2013"),
        caption.above = TRUE,
        fontsize = "scriptsize",
        float.pos = "htp",
@@ -123,7 +122,7 @@ texreg(modelsw,
        dcolumn = TRUE,
        use.packages = FALSE,
        label = "models_psid_imp_2",
-       caption = paste0("Cox Survival Models on the effect of Imprisonment on Mortality, \\newline ", max_imputations, " Imputations, Weighted, PSID 1968-2013"),
+       caption = paste0("Cox Survival Models on the effect of Imprisonment on Mortality, \\newline ", n_imputations, " Imputations, Weighted, PSID 1968-2013"),
        caption.above = TRUE,
        fontsize = "scriptsize",
        float.pos = "htp",

@@ -29,8 +29,8 @@ eststo: streg iprison cage gender fracei2 fracei3 liinc ieduc2 ieduc3 ieduc4, no
 
 * create table
 esttab using output/model_gompertz.tex, replace label gaps nodepvars nonotes ///
-title("Gompertz Models") ///
-nonumbers mtitles("Model 1" "Model 2")  booktabs alignment(S S) ///
+title("Gompertz Models on the effect of Imprisonment on Mortality, Unweighted, PSID 1968-2013") ///
+nonumbers mtitles("Model 1" "Model 2" "Model 3")  booktabs alignment(S S S) ///
 cells("b(fmt(2))" "se(fmt(2)par)") ///
 collabels(none) ///
 refcat(fracei2 "Race (ref. White)" ///
