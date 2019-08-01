@@ -1,4 +1,4 @@
-# Consequences of Incarceration for Mortality
+# Consequences of Incarceration for Mortality in the US
 
 This repository contains the code and simulation exercise discussed on the paper *The Consequences of Incarceration for Mortality in the US*.
 
